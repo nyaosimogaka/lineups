@@ -39,4 +39,21 @@
 	{{ form.submit(class="btn btn-secondary") }}
 </form>
 
+<br/>
+
+<h3>Existing Games</h3>
+<br/>
+<table class="table table-hover table-bordered table-striped">
+    <tr>
+        <th>Game Venue</th>
+        <th>Game Date</th>
+    </tr>
+    {% for match_game in our_games %}
+    <tr>
+        <td>{{ match_game.game_venue }}</td>
+        <td>{{ match_game.game_date }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
 {% endblock %}

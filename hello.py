@@ -19,10 +19,35 @@ db = SQLAlchemy(app)
 class Tournament(db.Model):
  	tournament_id = db.Column(db.Integer, primary_key=True)
  	tournament_name = db.Column(db.String(200), nullable=False, unique=True)
+ 	game = db.relationship('Game', back_populates='tournament')
 
  	#Create A String
  	def __repr__(self):
  		return '<Tournament %r>' % self.tournament_name
+
+# Create Game Model
+class Game(db.Model):
+    game_id = db.Column(db.Integer, primary_key=True)
+    game_venue = db.Column(db.String(200), nullable=True, unique=False)
+    game_date = db.Column(db.Date, nullable=True)
+    tournament_id = db.Column(db.Integer, db.ForeignKey('tournament.tournament_id'), nullable=False)
+    tournament = db.relationship('Tournament', back_populates='game')
+    
+    home_team = db.Column(db.Integer, db.ForeignKey('team.team_id'), nullable=False)
+    away_team = db.Column(db.Integer, db.ForeignKey('team.team_id'), nullable=False)
+    
+    hometeam = db.relationship('Team', foreign_keys=[home_team], back_populates='home_games')
+    awayteam = db.relationship('Team', foreign_keys=[away_team], back_populates='away_games')
+
+    home_coach = db.Column(db.Integer, db.ForeignKey('personell.personell_id'), nullable=False)
+    away_coach = db.Column(db.Integer, db.ForeignKey('personell.personell_id'), nullable=False)
+    
+    homecoach = db.relationship('Personell', foreign_keys=[home_coach], back_populates='home_c')
+    awaycoach = db.relationship('Personell', foreign_keys=[away_coach], back_populates='away_c')
+    
+    # Create a String
+    def __repr__(self):
+        return '<Game %r>' % self.game_venue
 
 #Create Team Model
 class Team(db.Model):
@@ -31,7 +56,10 @@ class Team(db.Model):
  	team_type = db.Column(db.String(200), nullable=False)
  	nickname = db.Column(db.String(200), nullable=True)
  	personnel = db.relationship('Personell', back_populates='team')
-
+ 	
+ 	home_games = db.relationship('Game', foreign_keys=[Game.home_team], back_populates='hometeam')
+ 	away_games = db.relationship('Game', foreign_keys=[Game.away_team], back_populates='awayteam')
+ 	
  	#Create A String
  	def __repr__(self):
  		return '<Team %r>' % self.team_name
@@ -44,6 +72,9 @@ class Personell(db.Model):
  	DOB = db.Column(db.Date, nullable=True)
  	team_id = db.Column(db.Integer, db.ForeignKey('team.team_id'), nullable=False)
  	team = db.relationship('Team', back_populates='personnel')
+ 	home_c = db.relationship('Game', foreign_keys=[Game.home_coach], back_populates='homecoach')
+ 	away_c = db.relationship('Game', foreign_keys=[Game.away_coach], back_populates='awaycoach')
+ 	
 
  	#Create A String
  	def __repr__(self):
@@ -86,12 +117,12 @@ class ActionForm(FlaskForm):
 #Create Game Form Class
 class GameForm(FlaskForm):
 	game_venue = StringField("Game Venue", validators=[DataRequired()])
-	game_date = DateField("Choose Date of Game")
-	game_tournament = SelectField("Select Tournament", choices=[('WCQ', 'World Cup Qualifier'), ('ITLF', 'International Friendly')], validate_choice=True)
-	home_team = SelectField("Select Home Team", choices=[('KE', 'Kenya'), ('ZW', 'Zimbabwe'), ('MW', 'Malawi')], validate_choice=True)
-	away_team = SelectField("Select Away Team", choices=[('KE', 'Kenya'), ('ZW', 'Zimbabwe'), ('MW', 'Malawi')], validate_choice=True)
-	home_coach = SelectField("Select Home Team Coach", choices=[('EF', 'Engin Firat')], validate_choice=True)
-	away_coach = SelectField("Select Away Team Coach", choices=[('EF', 'John Mckinstry')], validate_choice=True)
+	game_date = DateField("Game Date", format='%Y-%m-%d', validators=[Optional()])
+	game_tournament = SelectField("Select Tournament", validate_choice=True)
+	home_team = SelectField("Select Home Team", validate_choice=True)
+	away_team = SelectField("Select Away Team", validate_choice=True)
+	home_coach = SelectField("Select Home Team Coach", validate_choice=True)
+	away_coach = SelectField("Select Away Team Coach", validate_choice=True)
 	submit = SubmitField("Submit")
 
 #Get ENUM values from table.column
@@ -262,15 +293,31 @@ def game():
 	home_coach = None
 	away_coach = None
 	form  = GameForm()
+
+	# Set choices for game_tournament field
+	form.game_tournament.choices = [(tournament.tournament_id, tournament.tournament_name) for tournament in Tournament.query.all()]
+	# Set choices for home_team/away_team field
+	form.home_team.choices = [(hometeam.team_id, hometeam.team_name) for hometeam in Team.query.all()]
+	form.away_team.choices = [(awayteam.team_id, awayteam.team_name) for awayteam in Team.query.all()]
+
+	form.home_coach.choices = [(homecoach.personell_id, homecoach.personell_name) for homecoach in Personell.query.all()]
+	form.away_coach.choices = [(awaycoach.personell_id, awaycoach.personell_name) for awaycoach in Personell.query.all()]
+
 	#Validate Form
 	if form.validate_on_submit():
-		game_venue = form.game_venue.data
-		game_date = form.game_date.data
-		game_tournament = form.game_tournament.data
-		home_team = form.home_team.data
-		away_team = form.away_team.data
-		home_coach = form.home_coach.data
-		away_coach = form.away_coach.data
+		match_game = Game(
+			game_venue=form.game_venue.data,
+			game_date=form.game_date.data if form.game_date.data else None,
+			tournament_id=form.game_tournament.data,
+			home_team=form.home_team.data,
+			away_team=form.away_team.data,
+			home_coach=form.home_coach.data,
+			away_coach=form.away_coach.data
+			)
+		db.session.add(match_game)
+		db.session.commit()
+
+		# Clear the form fields
 		form.game_venue.data = ''
 		form.game_date.data = ''
 		form.game_tournament.data = ''
@@ -279,12 +326,16 @@ def game():
 		form.home_coach.data = ''
 		form.away_coach.data = ''
 		flash("Game Created Successfully")
+	
+	our_games = Game.query
 	return render_template('game.html',
-		game_venue=game_venue,
-		game_date=game_date,
-		game_tournament=game_tournament,
-		home_team=home_team,
-		away_team=away_team,
-		home_coach=home_coach,
-		away_coach=away_coach,
-		form=form)
+		game_venue = game_venue,
+		game_date = game_date,
+		game_tournament = game_tournament,
+		home_team = home_team,
+		away_team = away_team,
+		home_coach = home_coach,
+		away_coach = away_coach,
+		form=form,
+		our_games = our_games
+		)
