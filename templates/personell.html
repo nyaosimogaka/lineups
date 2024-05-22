@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+{% for message in get_flashed_messages() %}
+
+	<div class="alert alert-warning alert-dismissible fade show" role="alert">
+	  {{ message }}
+	  <button type="button" class="btn-close" data-bs-dismiss="success" aria-label="Close"></button>
+	</div>
+	
+{% endfor %}
+
+<h3> Create Personell </h3>
+<br/>
+<form method="POST">
+    {{ form.hidden_tag() }}
+    {{ form.personell_name.label(class="form-label") }}
+    {{ form.personell_name(class="form-control") }}
+    <br/>
+    {{ form.personell_type.label(class="form-label") }}
+    {{ form.personell_type(class="form-select") }}
+    <br/>
+    {{ form.DOB.label(class="form-label") }}
+    {{ form.DOB(class="form-control") }}
+    <br/>
+    {{ form.personell_team.label(class="form-label") }}
+    {{ form.personell_team(class="form-control") }}
+    <br/>
+    {{ form.submit(class="btn btn-secondary") }}
+</form>
+
+<br/>
+
+<h3>Existing Personell</h3>
+<br/>
+<table class="table table-hover table-bordered table-striped">
+    <tr>
+        <th>Personell Name</th>
+        <th>Personell Type</th>
+        <th>Date of Birth</th>
+        <th>Team</th>
+    </tr>
+    {% for person in our_personell %}
+    <tr>
+        <td>{{ person.personell_name }}</td>
+        <td>{{ person.personell_type }}</td>
+        <td>{{ person.DOB }}</td>
+        <td>{{ person.team.team_name }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% endblock %}

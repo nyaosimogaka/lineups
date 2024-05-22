@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+{% for message in get_flashed_messages() %}
+
+	<div class="alert alert-warning alert-dismissible fade show" role="alert">
+	  {{ message }}
+	  <button type="button" class="btn-close" data-bs-dismiss="success" aria-label="Close"></button>
+	</div>
+	
+{% endfor %}
+
+<h3> Create Game </h3>
+<br/>
+<form method="POST">
+	{{ form.hidden_tag() }}
+	{{ form.game_venue.label(class="form-label") }}
+	{{ form.game_venue(class="form-control") }}
+	<br/>
+	{{ form.game_date.label(class="form-label") }}
+	{{ form.game_date(class="form-control") }}
+	<br/>
+	{{ form.game_tournament.label(class="form-label") }}
+	{{ form.game_tournament(class="form-select") }}
+	<br/>
+	{{ form.home_team.label(class="form-label") }}
+	{{ form.home_team(class="form-select") }}
+	<br/>
+	{{ form.away_team.label(class="form-label") }}
+	{{ form.away_team(class="form-select") }}
+	<br/>
+	{{ form.home_coach.label(class="form-label") }}
+	{{ form.home_coach(class="form-select") }}
+	<br/>
+	{{ form.away_coach.label(class="form-label") }}
+	{{ form.away_coach(class="form-select") }}
+	<br/>
+	{{ form.submit(class="btn btn-secondary") }}
+</form>
+
+{% endblock %}

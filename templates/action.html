@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+{% for message in get_flashed_messages() %}
+
+	<div class="alert alert-warning alert-dismissible fade show" role="alert">
+	  {{ message }}
+	  <button type="button" class="btn-close" data-bs-dismiss="success" aria-label="Close"></button>
+	</div>
+	
+{% endfor %}
+
+{% if action_type %}
+
+	<table class="table table-hover table-bordered table-striped">
+	<tr>
+	<td> {{ action_type }}
+	</tr>
+
+{% else %}
+
+	<h3> Create Action </h3>
+	<br/>
+	<form method="POST">
+		{{ form.hidden_tag() }}
+		{{ form.action_type.label(class="form-label") }}
+		{{ form.action_type(class="form-control") }}
+		<br/>
+		{{ form.submit(class="btn btn-secondary") }}
+	</form>
+
+{% endif %}
+
+{% endblock %}

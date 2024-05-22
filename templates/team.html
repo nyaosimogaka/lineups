@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+{% for message in get_flashed_messages() %}
+
+	<div class="alert alert-warning alert-dismissible fade show" role="alert">
+	  {{ message }}
+	  <button type="button" class="btn-close" data-bs-dismiss="success" aria-label="Close"></button>
+	</div>
+	
+{% endfor %}
+
+{% if team_name %}
+
+	<table class="table table-hover table-bordered table-striped">
+		<tr>
+			<td> {{ team_name }} </td>
+		</tr>
+	</table>
+
+{% else %}
+
+<h3> Create Team </h3>
+<br/>
+<form method="POST">
+	{{ form.hidden_tag() }}
+	{{ form.team_name.label(class="form-label") }}
+	{{ form.team_name(class="form-control") }}
+	<br/>
+	{{ form.team_type.label(class="form-label") }}
+	{{ form.team_type(class="form-select") }}
+	<br/>
+	{{ form.nickname.label(class="form-label") }}
+	{{ form.nickname(class="form-control") }}
+	<br/>
+	{{ form.submit(class="btn btn-secondary") }}
+</form>
+
+{% endif %}
+
+{% endblock %}
